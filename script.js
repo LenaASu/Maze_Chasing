@@ -3,6 +3,14 @@
 //     Final Cleaned, Fully Fixed Version (2025)
 // ======================================================
 
+// ======================================================
+//                AI INTEGRATION VARIABLES
+// ======================================================
+
+const AI_SERVER_URL = "ws://localhost:8765";
+let aiWebSocket = null;
+let isAIControlled = false; // 设置为 true 表示AI控制，键盘将被禁用
+
 // Maze Data (0:Wall, 1:Path, 2:Pellet, 3:Power Pellet, 4:Ghost Cage, 5:Pac-Man Start)
 const PACMAN_MAZE = [
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -109,6 +117,116 @@ function getGridCell(r, c) {
 function updateScoreboard() {
     document.getElementById("current-score").textContent = score;
     document.getElementById("lives").textContent = lives;
+}
+
+// ======================================================
+//             WEB SOCKET / AI COMMUNICATION
+// ======================================================
+
+// 1. 获取完整的游戏状态
+function getCurrentGameState() {
+    // 收集所有 AI 需要的数据
+    const ghostsData = [];
+    for (const name in CHARACTERS) {
+        const char = CHARACTERS[name];
+        ghostsData.push({
+            name: name,
+            r: char.r,
+            c: char.c,
+            direction: char.direction,
+            state: char.state // "escape", "chase", "frightened"
+        });
+    }
+    
+    // 返回状态对象
+    return {
+        pacman_pos: { r: pacmanCurrentRow, c: pacmanCurrentCol, direction: currentDirection },
+        ghosts: ghostsData,
+        // CRITICAL: 发送可变的地图状态，AI Agent需要知道豆子是否被吃
+        map_state: currentMazeState, 
+        score: score,
+        lives: lives,
+        is_werewolf_mode: isWerewolfMode
+    };
+}
+
+// 2. 发送游戏状态给 Python Agent
+function sendGameState() {
+    if (aiWebSocket && aiWebSocket.readyState === WebSocket.OPEN) {
+        const gameState = getCurrentGameState();
+        aiWebSocket.send(JSON.stringify(gameState));
+    }
+}
+
+// 3. 处理从 Python Agent接收到的指令
+function applyAICommand(command) {
+    // 检查指令是否为有效的移动方向
+    const validDirs = ['up', 'down', 'left', 'right', 'stop'];
+    if (validDirs.includes(command)) {
+        // 设置 nextDirection，让 movePacman() 在下一帧执行此指令
+        nextDirection = command;
+
+        // 如果游戏暂停，接收到第一个有效指令时自动启动
+        if (!gameLoopInterval) {
+            startGameLoop();
+            ghostsActivated = true;
+        }
+    }
+}
+
+// 4. 建立 WebSocket 连接
+function connectToAI() {
+    aiWebSocket = new WebSocket(AI_SERVER_URL);
+
+    aiWebSocket.onopen = () => {
+        console.log("成功连接到 Python AI Agent 服务器！");
+    };
+
+    aiWebSocket.onmessage = (event) => {
+        const command = event.data;
+        // console.log("收到 AI 指令:", command); // 可用于调试
+        applyAICommand(command);
+    };
+
+    aiWebSocket.onerror = (error) => {
+        console.error("WebSocket 错误:", error);
+    };
+
+    aiWebSocket.onclose = () => {
+        console.log("与 AI Agent 的连接已关闭。");
+        // 可以在这里添加重连逻辑
+    };
+}
+
+// script.js (添加到文件任意位置，例如 connectToAI 函数之后)
+
+/**
+ * 切换 AI 控制状态，并根据需要连接/断开 WebSocket。
+ * @param {boolean} enable - 如果为 true 则启动 AI 控制，否则停止。
+ * @param {string} algorithm - 当前选择的算法名称 (如 'mcts', 'a_star', 'dqn')。
+ */
+function toggleAIControl(enable, algorithm = null) {
+    if (enable) {
+        if (!isAIControlled) {
+            isAIControlled = true;
+            console.log(`AI Control ENABLED: ${algorithm} selected.`);
+            // **关键：您可以在这里将选择的算法发送给 Python 服务器！**
+            // 例如：aiWebSocket.send(JSON.stringify({command: "set_algorithm", name: algorithm}));
+            // 目前我们只记录在控制台。
+            connectToAI(); // 确保连接已建立或重新连接
+        } else {
+            // 如果 AI 已经开启，仅切换选择的算法（如果需要）
+            console.log(`AI already ON. Switched algorithm to: ${algorithm}`);
+        }
+    } else {
+        isAIControlled = false;
+        console.log("AI Control DISABLED (Back to Keyboard).");
+        // 游戏循环逻辑将处理键盘输入和停止发送游戏状态
+        if (aiWebSocket) {
+             // 可以选择断开连接或保持连接等待下次AI启动
+             // 简单起见，我们保持连接，但停止发送数据
+        }
+    }
 }
 
 // --- Initialize/Re-Draw the Maze and Collectables ---
@@ -462,6 +580,10 @@ function startGameLoop() {
     if (gameLoopInterval) return;
     gameLoopInterval = setInterval(() => {
         if (!isPaused) {
+            if (isAIControlled){
+                sendGameState();
+            }
+
             movePacman();
             moveCharacters();
         }
@@ -926,6 +1048,8 @@ function handleKeyDown(e) {
         return;
     } 
 
+    if (isAIControlled) return;
+
     // Movement keys
     const dirs = { 
         "i":"up","I":"up", 
@@ -1045,6 +1169,31 @@ document.addEventListener("DOMContentLoaded", () => {
     createCharacterGraphics();
 
     initializeMaze();
+
+    // Connect to AI
+    connectToAI();
+
+    // AI button
+    const aiControlBtns = document.querySelectorAll(".ai-control-btn");
+    aiControlBtns.forEach(button => {
+        button.addEventListener("click", (event) => {
+            const algorithm = event.target.getAttribute("data-algorithm");
+
+            // Apply AI-Control
+            toggleAIControl(true, algorithm);
+            startGameLoop();
+
+            // Select specific algorithm to Python server
+            if (aiWebSocket && aiWebSocket.readyState === WebSocket.OPEN){
+                aiWebSocket.send(JSON.stringify({command: "set_algorithm", name:algorithm}));
+                console.log('Sent algorithm selection: ${algorithm}' );
+            }
+
+            // Option: Ban other buttons, emphasis present selected button
+            aiControlBtns.forEach(btn => btn.classList.remove('active-algo'));
+            event.target.classList.add('active-algo');
+        })
+    })
 
     // Input handlers
     document.addEventListener("keydown", handleKeyDown);

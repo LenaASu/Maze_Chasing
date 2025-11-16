@@ -378,6 +378,43 @@ body {
     /* ... other styles ... */
 }
 
+/* style2.css (添加到文件末尾) */
+
+.ai-control-btn {
+    background-color: var(--color-moon-4);
+    color: var(--color-bg-dark);
+    border: none;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.ai-control-btn:hover {
+    background-color: var(--color-yellow);
+}
+
+.ai-control-btn:active {
+    transform: scale(0.98);
+}
+
+/* 突出显示当前激活的 AI 算法 */
+.ai-control-btn.active-algo {
+    background-color: var(--color-red);
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+}
+
+/* 调整记分板的 score-value 容器，以便按钮居中或对齐 */
+.scoreboard .score-value {
+    /* 假设您想要按钮在右侧，或者根据您的布局调整 */
+    display: flex;
+    justify-content: flex-end; /* 或者 center */
+    align-items: center;
+}
+
 @keyframes pulse {
     from { opacity: 1; }
     to { opacity: 0.5; }
