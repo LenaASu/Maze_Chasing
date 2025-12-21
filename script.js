@@ -1,17 +1,29 @@
 // ======================================================
 //                 PAC-MAN GAME ENGINE
-//     Final Cleaned, Fully Fixed Version (2025)
+//              Version (2025), Xiang Luo
 // ======================================================
 
 // ======================================================
-//                AI INTEGRATION VARIABLES
+//             AI SERVER INTEGRATION VARIABLES
 // ======================================================
 
 const AI_SERVER_URL = "ws://localhost:8765";
 let aiWebSocket = null;
-let isAIControlled = false; // 设置为 true 表示AI控制，键盘将被禁用
+let isAIControlled = false; 
 
-// Maze Data (0:Wall, 1:Path, 2:Pellet, 3:Power Pellet, 4:Ghost Cage, 5:Pac-Man Start)
+// ======================================================
+//                GLOBAL GAME VARIABLES
+// ======================================================
+
+// ----- Maze Data ----- 
+const WALL = 0; // Rerir cannot move on this tile
+const PATH = 1; // Rerir can move on this tile
+const PELLET = 2; // Rerir can eat them to earn scores
+const HEART_FRAGMENT = 3; // Rerir eats them and will werewolf in 8 seconds
+// During Rerir's werewolf state Rerir can eat enemies. Enemies are in "frighten" state and run away from Rerir.
+const GHOST_CAGE = 4; // Enemies' staring points
+const PACMAN_START = 5; // Rerir's starting point
+
 const PACMAN_MAZE = [
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,2,2,2,2,2,2,2,2,2,2,2,2,0,0,2,2,2,2,2,2,2,2,2,2,2,2,0],
@@ -39,39 +51,23 @@ const PACMAN_MAZE = [
     [0,0,0,2,0,0,2,0,0,2,0,0,0,0,0,0,0,0,2,0,0,2,0,0,2,0,0,0],
     [0,2,2,2,2,2,2,0,0,2,2,2,2,0,0,2,2,2,2,0,0,2,2,2,2,2,2,0],
     [0,2,0,0,0,0,0,0,0,0,0,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,2,0],
-    [0,2,0,0,0,0,0,0,0,0,0,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,2,0],
+    [0,2,0,0,0,0,0,0,0,0,0,0,2,2,2,2,0,0,0,0,0,0,0,0,0,0,2,0],
     [0,2,2,2,2,2,2,2,2,2,2,2,2,5,1,2,2,2,2,2,2,2,2,2,2,2,2,0],
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 ];
 
 let currentMazeState = [];
 
-// ======================================================
-//                 GHOST INITIAL POSITIONS
-// ======================================================
+// ----- BGM -----
+let audioBGM = null;
 
-const CHARACTERS = {
-    // Speed reduced to 0.9 and state initialized to "escape"
-    traveler: { r:14, c:13, direction:'up',  class:'traveler-graphic', element:null, speedMultiplier:0.9, tick:0, role:"blinky", state: "escape" },
-    albedo:   { r:14, c:14, direction:'up',  class:'albedo-graphic',   element:null, speedMultiplier:0.9, tick:0, role:"pinky",  state: "escape" },
-    aino:     { r:14, c:12, direction:'up',  class:'aino-graphic',     element:null, speedMultiplier:0.9, tick:0, role:"inky",   state: "escape" },
-    flins:    { r:14, c:15, direction:'up',  class:'flins-graphic',    element:null, speedMultiplier:0.9, tick:0, role:"clyde",  state: "escape" }
-};
-
-// ======================================================
-//                GLOBAL GAME VARIABLES
-// ======================================================
-
-const WALL = 0;
-const PATH = 1;
-const PELLET = 2;
-const HEART_FRAGMENT = 3;
-const GHOST_CAGE = 4;
-const PACMAN_START = 5;
+// ----- Characters (Rerir) -----
+const GAME_SPEED = 250;
+const GAME_SPEED_SECONDS = GAME_SPEED / 1000;
+const WEREWOLF_DURATION = 8000; //8 seconds (8000 ms)
 
 let isWerewolfMode = false;
 let werewolfTimer = null;
-const WEREWOLF_DURATION = 8000; //8 seconds (8000 ms)
 
 let pacmanCurrentRow = 27;
 let pacmanCurrentCol = 13;
@@ -80,28 +76,33 @@ let pacmanCurrentCol = 13;
 const PACMAN_START_R = 27; 
 const PACMAN_START_C = 13;
 
+// ----- Characters (Enemies) -----
+const CHARACTERS = {
+    // Use speedMultiplier to change the speed of enemies 
+    traveler: { r:14, c:13, direction:'up',  class:'traveler-graphic', element:null, speedMultiplier:0.7, tick:0, role:"blinky", state: "escape" },
+    albedo:   { r:14, c:14, direction:'up',  class:'albedo-graphic',   element:null, speedMultiplier:0.7, tick:0, role:"pinky",  state: "escape" },
+    aino:     { r:14, c:12, direction:'up',  class:'aino-graphic',     element:null, speedMultiplier:0.7, tick:0, role:"inky",   state: "escape" },
+    flins:    { r:14, c:15, direction:'up',  class:'flins-graphic',    element:null, speedMultiplier:0.7, tick:0, role:"clyde",  state: "escape" }
+};
+
+// ----- Initialize Basic Settings -----
 let score = 0;
 let lives = 3;
-let isPaused = false;
 
-// --- NEW GAME STATE VARIABLES ---
+let cellSize = 0;
 let totalCollectables = 0;
 let remainingCollectables = 0;
-// --------------------------------
 
+let isPaused = false;
 let currentDirection = 'right';
 let nextDirection = 'right';
+let pacmanGraphicElement = null;
 
 let ghostsActivated = false;
 
-let gameLoopInterval = null;
-const GAME_SPEED = 200;
-const GAME_SPEED_SECONDS = GAME_SPEED / 1000;
-
-let pacmanGraphicElement = null;
-let cellSize = 0;
-
 let hasGhostActivationScheduled = false;
+let gameLoopInterval = null;
+
 
 // ======================================================
 //                HELPER FUNCTIONS
@@ -120,12 +121,35 @@ function updateScoreboard() {
 }
 
 // ======================================================
-//             WEB SOCKET / AI COMMUNICATION
+//             WEBSOCKET & AI AGENT COMMUNICATION
 // ======================================================
 
-// 1. 获取完整的游戏状态
+// 1. Create WebSocket & AI Agent connection
+function connectToAI() {
+    aiWebSocket = new WebSocket(AI_SERVER_URL);
+
+    aiWebSocket.onopen = () => {
+        console.log("Successfully connect to Python AI Agent server!");
+    };
+
+    aiWebSocket.onmessage = (event) => {
+        const command = event.data;
+        // console.log("Received AI command:", command); // Test if agent can receive commands 
+        applyAICommand(command);
+    };
+
+    aiWebSocket.onerror = (error) => {
+        console.error("WebSocket error:", error);
+    };
+
+    aiWebSocket.onclose = () => {
+        console.log("Connection with AI Agent closed.");
+        // Optional: add re-connect logic
+    };
+}
+
+// 2. Web collect all the data AI needs
 function getCurrentGameState() {
-    // 收集所有 AI 需要的数据
     const ghostsData = [];
     for (const name in CHARACTERS) {
         const char = CHARACTERS[name];
@@ -134,15 +158,14 @@ function getCurrentGameState() {
             r: char.r,
             c: char.c,
             direction: char.direction,
-            state: char.state // "escape", "chase", "frightened"
+            state: char.state // States: "escape", "chase", "frightened"
         });
     }
     
-    // 返回状态对象
     return {
-        pacman_pos: { r: pacmanCurrentRow, c: pacmanCurrentCol, direction: currentDirection },
+        // Information for AI agents to make decisions 
+        pacman_pos: {r: pacmanCurrentRow, c: pacmanCurrentCol, direction: currentDirection},
         ghosts: ghostsData,
-        // CRITICAL: 发送可变的地图状态，AI Agent需要知道豆子是否被吃
         map_state: currentMazeState, 
         score: score,
         lives: lives,
@@ -150,7 +173,7 @@ function getCurrentGameState() {
     };
 }
 
-// 2. 发送游戏状态给 Python Agent
+// 3. Web sends information to AI agents
 function sendGameState() {
     if (aiWebSocket && aiWebSocket.readyState === WebSocket.OPEN) {
         const gameState = getCurrentGameState();
@@ -158,15 +181,14 @@ function sendGameState() {
     }
 }
 
-// 3. 处理从 Python Agent接收到的指令
+// 4. Ai agents analyse information
 function applyAICommand(command) {
-    // 检查指令是否为有效的移动方向
+    // If the next command is valid, run this command in next frame
     const validDirs = ['up', 'down', 'left', 'right', 'stop'];
     if (validDirs.includes(command)) {
-        // 设置 nextDirection，让 movePacman() 在下一帧执行此指令
         nextDirection = command;
 
-        // 如果游戏暂停，接收到第一个有效指令时自动启动
+        // If pause the game (press "space"), resume when receiving the first valid command (press "space" again)
         if (!gameLoopInterval) {
             startGameLoop();
             ghostsActivated = true;
@@ -174,63 +196,33 @@ function applyAICommand(command) {
     }
 }
 
-// 4. 建立 WebSocket 连接
-function connectToAI() {
-    aiWebSocket = new WebSocket(AI_SERVER_URL);
 
-    aiWebSocket.onopen = () => {
-        console.log("成功连接到 Python AI Agent 服务器！");
-    };
-
-    aiWebSocket.onmessage = (event) => {
-        const command = event.data;
-        // console.log("收到 AI 指令:", command); // 可用于调试
-        applyAICommand(command);
-    };
-
-    aiWebSocket.onerror = (error) => {
-        console.error("WebSocket 错误:", error);
-    };
-
-    aiWebSocket.onclose = () => {
-        console.log("与 AI Agent 的连接已关闭。");
-        // 可以在这里添加重连逻辑
-    };
-}
-
-// script.js (添加到文件任意位置，例如 connectToAI 函数之后)
 
 /**
- * 切换 AI 控制状态，并根据需要连接/断开 WebSocket。
- * @param {boolean} enable - 如果为 true 则启动 AI 控制，否则停止。
- * @param {string} algorithm - 当前选择的算法名称 (如 'mcts', 'a_star', 'dqn')。
+ * @param {boolean} enable - If true, then controlled by AI
+ * @param {string} algorithm - The selected algorithm ('mcts', 'a_star', 'dqn')
  */
 function toggleAIControl(enable, algorithm = null) {
     if (enable) {
         if (!isAIControlled) {
             isAIControlled = true;
-            console.log(`AI Control ENABLED: ${algorithm} selected.`);
-            // **关键：您可以在这里将选择的算法发送给 Python 服务器！**
-            // 例如：aiWebSocket.send(JSON.stringify({command: "set_algorithm", name: algorithm}));
-            // 目前我们只记录在控制台。
-            connectToAI(); // 确保连接已建立或重新连接
+            console.log(`AI Control ENABLED: ${algorithm} selected.`); // Select algorithm
+            connectToAI(); // Sent the name of selected algorithm to AI Agent
         } else {
-            // 如果 AI 已经开启，仅切换选择的算法（如果需要）
+            // When running a AI Agent, apply another algorithm will switch to another agent. 
             console.log(`AI already ON. Switched algorithm to: ${algorithm}`);
         }
     } else {
         isAIControlled = false;
         console.log("AI Control DISABLED (Back to Keyboard).");
-        // 游戏循环逻辑将处理键盘输入和停止发送游戏状态
         if (aiWebSocket) {
-             // 可以选择断开连接或保持连接等待下次AI启动
-             // 简单起见，我们保持连接，但停止发送数据
+             // Keep connecting but do not send information
+             // Optional: Close the connection 
         }
     }
 }
 
-// --- Initialize/Re-Draw the Maze and Collectables ---
-// --- UPDATED: Function to Initialize/Re-Draw the Maze and Collectables ---
+// Initialize/Re-Draw the Maze and Collectables
 function initializeMaze() {
     const grid = document.getElementById("maze-grid");
     
@@ -238,7 +230,7 @@ function initializeMaze() {
     grid.innerHTML = ''; 
 
     // 2. Reset the current game state to a fresh copy of the original maze
-    //    We use .map() to create a true deep copy of the 2D array.
+    //    Use .map() to create a true deep copy of the 2D array.
     currentMazeState = PACMAN_MAZE.map(row => [...row]); 
 
     // 3. Reset collectable counts
@@ -330,7 +322,7 @@ function checkWinCondition() {
     }
 }
 
-// --- NEW: Full Game Reset ---
+// Full Game Reset
 function fullGameReset() {
     // 1. Reset all persistent state variables
     score = 0;
@@ -418,7 +410,7 @@ function checkCollision() {
             if (isWerewolfMode && char.state === "frightened") {
                 // Rerir EATS the enemy (Ghost-eat logic remains the same)
                 
-                score += 200; // EAT GHOST POINTS
+                score += 200; // Bonous scores for eating one enemy
                 updateScoreboard();
 
                 // Teleport the eaten ghost back to the starting cage
@@ -441,7 +433,6 @@ function checkCollision() {
             } else {
                 // Rerir is EATEN by the enemy (Normal collision)
                 fatalCollisionDetected = true;
-                // DO NOT PROCESS DEATH HERE, let the function finish and return.
             }
         }
     }
@@ -503,7 +494,6 @@ function updatePacmanVisualPosition() {
 // ======================================================
 //                MOVEMENT VALIDATION
 // ======================================================
-// CLEANED: Only validates move and returns potential next coordinates/warp status.
 function checkNextMove(direction, r=pacmanCurrentRow, c=pacmanCurrentCol, entity="player") {
     let nr = r, nc = c;
     const maxCols = PACMAN_MAZE[0].length;
@@ -597,22 +587,34 @@ function stopGameLoop() {
     }
 }
 
+
 function togglePause() {
+    isPaused = !isPaused;
+    
     if (isPaused) {
-        // Unpausing/Starting the game
-        isPaused = false;
-        startGameLoop();
-        // FIX: IMMEDIATE GHOST ACTIVATION ON START/RESUME (Initial Start)
-        ghostsActivated = true; 
+        stopGameLoop(); 
+        
+        // pause bgm
+        if (audioBGM && !audioBGM.paused) {
+            audioBGM.pause();
+        }
+
     } else {
-        // Pausing the game
-        isPaused = true;
-        stopGameLoop();
+        startGameLoopGame(); // 
+        ghostsActivated = true;
+        
+        // play bgm
+        if (audioBGM && audioBGM.paused) {
+            audioBGM.volume = 1;
+            audioBGM.play().catch(error => {
+                console.log("Audio playback blocked by browser policy:", error);
+            });
+        }
     }
 }
 
 // ======================================================
-//             GHOST ACTIVATION DELAY (NEW)
+//             GHOST ACTIVATION DELAY 
 // ======================================================
 
 function delayGhostActivation() {
@@ -673,7 +675,7 @@ function getInkyTarget() {
 
 function getClydeTarget(char) {
     const dist = manhattan(char.r, char.c, pacmanCurrentRow, pacmanCurrentCol);
-    if (dist < 8) return { r: 27, c:0 }; // Scatter corner
+    if (dist < 8) return { r: 27, c:0 }; 
     return { r: pacmanCurrentRow, c: pacmanCurrentCol };
 }
 
@@ -691,7 +693,7 @@ function hasLineOfSight(r1,c1,r2,c2) {
     return false;
 }
 
-// CLEANED: Simplified no-U-turn logic to prevent oscillation.
+// Simplified no-U-turn logic to prevent oscillation.
 function getPossibleMoves(r,c,currentDir,entity="player") {
     const dirs = ["up","down","left","right"];
     const out = [];
@@ -945,9 +947,9 @@ function endWerewolfMode() {
 }
 
 // =======================================================
-//                 UTILITY FUNCTION FOR WARP
+//             UTILITY FUNCTION FOR WARP
 // =======================================================
-// CLEANED: Uses global cellSize.
+
 function warpCharacter(element, newR, newC) {
     // 1. Disable the CSS transition
     element.style.transition = 'none';
@@ -965,7 +967,6 @@ function warpCharacter(element, newR, newC) {
 // ======================================================
 //                PAC-MAN MOVEMENT
 // ======================================================
-// MODIFIED: Implemented robust turning logic, collection tracking, and win check.
 
 function movePacman() {
     if (isPaused) return;
@@ -1070,8 +1071,8 @@ function handleKeyDown(e) {
             if (valid) {
                 currentDirection = nextDirection;
                 startGameLoop();
-                
-                // FIX: IMMEDIATE GHOST ACTIVATION FOR FIRST MOVEMENT-KEY START
+      
+                // Immediate ghost activation for first movement-key to start
                 ghostsActivated = true; 
             }
         }
@@ -1158,8 +1159,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const grid = document.getElementById("maze-grid");
 
     remainingCollectables = totalCollectables;
-    // -------------------------------
 
+    // BGM
+    audioBGM = document.getElementById("bgm");
     // Create Pac-Man
     pacmanGraphicElement = document.createElement("div");
     pacmanGraphicElement.classList.add("pacman-graphic","pacman-right");

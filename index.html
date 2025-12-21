@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="characters/Rerir.png">
-    <link rel="stylesheet" href="style2.css">
+    <link rel="stylesheet" href="style.css">
     
-    <title>Rerir: Werewolf</title>
+    <title>Pac-Man</title>
 </head>
 <body>
-
+    <!-- <audio id="bgm" src="To Light the Aeon Dark.mp3" autoplay loop></audio> -->
     <div class="header-container">
         <h1 class="header-title">Rerir: Werewolf</h1>
-        <h3 >  Press the <div class="border">space</div> to start or stop/resume the game.</h3>
+        <h3 >  Press the <div class="border">space</div> to stop/resume the game.</h3>
        <p><strong>Up:</strong> I <space></space><strong>Down:</strong> K </p>
 
        <p><strong>Left: </strong>J <strong>Right:</strong> L</p>
@@ -45,9 +45,29 @@
             </div>
 
             <h2 class="scoreboard-title">Enemies</h2>
-            <div class="score-item"><img src="characters/traveler.png"/>Traveler  <img src="characters/Aino.png"/>Aino</div>
-            <div class="score-item"><img src="characters/Albedo.png"/>Albedo  <img src="characters/Flins.png"/>Flins</div>
-        
+
+            <div class="enemy-row">
+                <div class="score-item enemy-item">
+                    <img src="characters/traveler.png"/>
+                    <span class="score-label">Traveler</span>
+                </div>
+                <div class="score-item enemy-item">
+                    <img src="characters/Aino.png"/>
+                    <span class="score-label">Aino</span>
+                </div>
+            </div>
+
+            <div class="enemy-row">
+                <div class="score-item enemy-item">
+                    <img src="characters/Albedo.png"/>
+                    <span class="score-label">Albedo</span>
+                </div>
+                <div class="score-item enemy-item">
+                    <img src="characters/Flins.png"/>
+                    <span class="score-label">Flins</span>
+                </div>
+            </div>
+
 
             <h2 class="scoreboard-title">Skills</h2>
             <div class="score-item">
