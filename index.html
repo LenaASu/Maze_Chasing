@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@800&family=Montserrat:wght@900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Germania+One&display=swap" rel="stylesheet">
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,16 +8,16 @@
     <link rel="icon" type="image/png" href="characters/Rerir.png">
     <link rel="stylesheet" href="style.css">
     
-    <title>Pac-Man</title>
+    <title>Rerir: Werewolf</title>
 </head>
 <body>
-    <!-- <audio id="bgm" src="To Light the Aeon Dark.mp3" autoplay loop></audio> -->
+    <audio id="bgm" src="To Light the Aeon Dark.mp3" preload="auto" loop></audio>
     <div class="header-container">
         <h1 class="header-title">Rerir: Werewolf</h1>
         <h3 >  Press the <div class="border">space</div> to stop/resume the game.</h3>
-       <p><strong>Up:</strong> I <space></space><strong>Down:</strong> K </p>
+       <p><strong>Up:</strong> W <space></space><strong>Down:</strong> S </p>
 
-       <p><strong>Left: </strong>J <strong>Right:</strong> L</p>
+       <p><strong>Left: </strong>A <strong>Right:</strong> D</p>
     </div>
 
     <div class="game-area-container">
@@ -85,25 +87,36 @@
             <div class="score-item">
                 <span class="score-label">Navigation (MCTS)</span>
                 <span class="score-value">
-                    <button class="ai-control-btn" data-algorithm="mcts">Apply</button>
+                    <button class="ai-control-btn" data-algorithm="mcts">✔</button>
                 </span>
        
             </div>
             <div class="score-item">
                 <span class="score-label">Navigation (A*)</span>
                 <span class="score-value">
-                    <button class="ai-control-btn" data-algorithm="a_star">Apply</button>
+                    <button class="ai-control-btn" data-algorithm="a_star">✔</button>
                 </span>
             </div>
             <div class="score-item">
                 <span class="score-label">Navigation (DQN)</span>
                 <span class="score-value">
-                    <button class="ai-control-btn" data-algorithm="dqn">Apply</button>
+                    <button class="ai-control-btn" data-algorithm="dqn">✔</button>
                 </span>
             </div>
         </div>
 
     </div>
+
+    <footer>
+        <div class="header-subtitle">
+        <p>Created & Developed by 
+            <a href="https://x.com/LenaAsu_" target="_blank" class="author-link">LenaA (@LenaAsu_)</a>
+        </p>
+        <p>Illustrations, Character Designs, and Assets by <strong>LenaA</strong>. Music by <strong>HOYO-MIX</strong>.</p>
+         <p>Inspired by <em>Genshin Impact: Song of the Welkin Moon</em> (© HoYoverse) and classic arcade mechanics. This is a non-commercial fan project.</p>
+    </div>
+       
+    </footer>
     
     <script src="script.js"></script>
     

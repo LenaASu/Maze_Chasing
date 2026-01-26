@@ -98,7 +98,8 @@ let currentDirection = 'right';
 let nextDirection = 'right';
 let pacmanGraphicElement = null;
 
-let ghostsActivated = false;
+let ghostsActivated = true;
+let isAutoStart = false; 
 
 let hasGhostActivationScheduled = false;
 let gameLoopInterval = null;
@@ -308,9 +309,49 @@ function handleRerirDeath() {
 // ======================================================
 
 function gameOver() {
-    stopGameLoop();
-    alert("⛓️‍💥 YOU ARE ARRESTED! (Rerir has run out of lives.)");
-    fullGameReset();
+    stopGameLoop(); 
+    
+    const message = "⛓️‍💥 YOU ARE ARRESTED! (Rerir has run out of lives.)";
+    
+    if (aiWebSocket && aiWebSocket.readyState === WebSocket.OPEN) {
+        aiWebSocket.send(JSON.stringify({
+            command: "game_summary",
+            status: "lost",
+            final_score: score || 0
+        }));
+    }
+
+    setTimeout(() => {
+        alert(message);
+        fullGameReset();
+    }, 100);
+
+
+    // const status = lives <= 0 ? "lost" : "won";
+
+    // if (aiWebSocket && aiWebSocket.readyState === WebSocket.OPEN) {
+    //         aiWebSocket.send(JSON.stringify({
+    //             command: "game_summary",
+    //             status: lives <= 0 ? "lost" : "won",
+    //             final_score: score || 0,
+    //             duration: typeof gameDuration !== 'undefined' ? gameDuration : null,
+    //             iterations: typeof gameIterations !== 'undefined' ? gameIterations : null,
+    //         }));
+
+    //         setTimeout(() => {
+    //             alert("⛓️‍💥 YOU ARE ARRESTED! (Rerir has run out of lives.)");
+    //             // location.reload(); // Reload the page to restart the game
+    //             fullGameReset();
+    //         }, 100);
+    //     } else {
+    //         alert("⛓️‍💥 YOU ARE ARRESTED! (Rerir has run out of lives.)");
+    //         // location.reload();
+    //         fullGameReset();
+    //     }
+        
+    // stopGameLoop();
+    // alert("⛓️‍💥 YOU ARE ARRESTED! (Rerir has run out of lives.)");
+    // fullGameReset();
 
 }
 
@@ -318,7 +359,22 @@ function checkWinCondition() {
     if (remainingCollectables <= 0) {
         stopGameLoop();
         alert("🎉🐺 Rerir Werewolf!");
-        fullGameReset();
+        // fullGameReset();
+    }
+}
+
+// Send Game Over Stats to AI Agent
+function sendGameOverStats() {
+    if (aiWebSocket && aiWebSocket.readyState === WebSockets.OPEN) {
+        aiWebSocket.send(JSON.stringify({
+            command: "game_summary",
+            status: "lost",
+            // status: lives <= 0 ? "lost" : "won"
+            final_score: score,
+            lives: lives,
+            duration: gameDuration,
+            
+        }));
     }
 }
 
@@ -342,7 +398,7 @@ function fullGameReset() {
     initializeMaze(); 
 
     // 3. Use resetGame() to place characters and start the game loop
-    // Note: resetGame already calls startGameLoop() and updates visuals.
+    // ResetGame already calls startGameLoop() and updates visuals.
     resetGame();
     
     // Since this is a full reset, we need to ensure the ghost delay is active
@@ -353,9 +409,17 @@ function resetGame() {
     // Reset Pac-Man position
     pacmanCurrentRow = PACMAN_START_R;
     pacmanCurrentCol = PACMAN_START_C;
-    currentDirection = 'right';
-    nextDirection = 'right';
+    currentDirection = null;
+    nextDirection = null;
 
+    // if (isAIControlled){
+    //     currentDirection = 'right';
+    //     nextDirection = 'right';
+    // } else {
+    //     currentDirection = null;
+    //     nextDirection = null;
+    // }
+    
     // Reset Ghost positions and state
     for (const name in CHARACTERS) {
         const char = CHARACTERS[name];
@@ -372,26 +436,36 @@ function resetGame() {
         char.direction = initial.direction;
         char.state = initial.state;
     }
-    
+
+    //
+    stopGameLoop();
+
     // Deactivate ghosts until Pac-Man moves again
     ghostsActivated = false;
     isPaused = false; 
-    isCurrentlyDying = false; // IMPORTANT: Reset the death flag
+    isCurrentlyDying = false; // Reset the death flag
+
+    //
+    currentDirection = null;
+    nextDirection = null;
 
     updatePacmanVisualPosition();
     updateCharacterVisualPositions();
     updateScoreboard();
 
     // Automatically restart the game loop to resume movement
-    startGameLoop(); 
+    // startGameLoop(); 
+
+    // Delay Ghost Activation by 1 second 
     // delayGhostActivation();
-    // --- Delay Ghost Activation by 1 second ---
-    setTimeout(() => {
-        // Only activate if the game hasn't been paused or stopped/over
-        if (gameLoopInterval) {
-            ghostsActivated = true;
-        }
-    }, 1000); // 1000ms = 1 second delay
+    
+    // // 1000ms = 1 second delay
+    // setTimeout(() => {
+    //     // Only activate if the game hasn't been paused or stopped/over
+    //     if (gameLoopInterval) {
+    //         ghostsActivated = true;
+    //     }
+    // }, 1000); 
 }
 
 // ======================================================
@@ -430,18 +504,32 @@ function checkCollision() {
                 
                 continue; // Continue checking other ghosts to see if Rerir eats them too
 
-            } else {
-                // Rerir is EATEN by the enemy (Normal collision)
-                fatalCollisionDetected = true;
+            } 
+            // else {
+            //     // Rerir is EATEN by the enemy (Normal collision)
+                
+            //     lives--;
+            //     updateScoreboard();
+
+            //     if (lives <= 0) {
+            //         gameStarted = false;
+            //         ghostsActivated = false;
+            //         gameOver();
+            //         return true;
+            // } 
+            else {
+                handleRerirDeath();
+                return true
+                // fatalCollisionDetected = true;
             }
         }
     }
 
     // FINAL CHECK: If ANY fatal collision was detected, trigger the death handler once.
-    if (fatalCollisionDetected) {
-        handleRerirDeath();
-        return true;
-    }
+    // if (fatalCollisionDetected) {
+    //     handleRerirDeath();
+    //     return true;
+    // }
     
     return false; // No fatal collision detected
 }
@@ -593,23 +681,25 @@ function togglePause() {
     
     if (isPaused) {
         stopGameLoop(); 
-        
-        // pause bgm
-        if (audioBGM && !audioBGM.paused) {
-            audioBGM.pause();
-        }
-
     } else {
-        startGameLoopGame(); // 
-        ghostsActivated = true;
+        startGameLoop();
+        // ghostsActivated = true;
+        tryPlayBGM();
+        // startGameLoop(); 
+        // ghostsActivated = true;
         
         // play bgm
-        if (audioBGM && audioBGM.paused) {
-            audioBGM.volume = 1;
-            audioBGM.play().catch(error => {
-                console.log("Audio playback blocked by browser policy:", error);
-            });
-        }
+        // if (audioBGM && audioBGM.paused) {
+        //     audioBGM.volume = 0;
+        //     audioBGM.play();
+        //     let fadeIn = setInterval(() => {
+        //         if (audioBGM.volume < 0.5) {
+        //             audioBGM.volume += 0.05;
+        //         } else {
+        //             clearInterval(fadeIn);
+        //         }
+        //     }, 100);
+        // }
     }
 }
 
@@ -750,7 +840,7 @@ function chooseDirectionTowardsTarget(char,target) {
 // ======================================================
 
 function moveCharacters() {
-    if (!ghostsActivated) return;
+    if (!ghostsActivated || isPaused || lives <= 0) return;
 
     // Use this to determine if we need a standard visual update at the end
     let didWarpOccur = false;
@@ -969,7 +1059,7 @@ function warpCharacter(element, newR, newC) {
 // ======================================================
 
 function movePacman() {
-    if (isPaused) return;
+    if (isPaused || !currentDirection) return;
 
     let moveDirection = currentDirection; // Use this for the actual move
     let step = { valid: false };
@@ -990,19 +1080,17 @@ function movePacman() {
     // --- EXECUTE MOVE ---
     
     // Update coordinates to the new (potentially warped) position
+    if (!ghostsActivated) {
+        ghostsActivated = true;
+    }
+
     pacmanCurrentRow = step.nextR;
     pacmanCurrentCol = step.nextC;
 
-    // if (!ghostsActivated) ghostsActivated = true;
-
-    // Eating & Collection Check
-    // const tile = PACMAN_MAZE[pacmanCurrentRow][pacmanCurrentCol];
     // Eating & Collection Check
     const tile = currentMazeState[pacmanCurrentRow][pacmanCurrentCol];
-    // FIX: Using HEART_FRAGMENT constant (which is 3) instead of POWER_PELLET which is not defined
+    
     if (tile === PELLET || tile === HEART_FRAGMENT) { 
-        // PACMAN_MAZE[pacmanCurrentRow][pacmanCurrentCol] = PATH;
-        // CRITICAL FIX: Update the mutable maze array
         currentMazeState[pacmanCurrentRow][pacmanCurrentCol] = PATH;
 
         // --- Werewolf Mode Logic ---
@@ -1017,7 +1105,6 @@ function movePacman() {
         // --- WIN/COLLECTION LOGIC ---
         remainingCollectables--; 
         checkWinCondition();
-        // --------------------------
 
         const cell = getGridCell(pacmanCurrentRow,pacmanCurrentCol);
         if (cell) {
@@ -1042,7 +1129,6 @@ function movePacman() {
 
 function handleKeyDown(e) {
     const key = e.key;
-    // Space = Pause/Start (triggers togglePause)
     if (key === " ") { 
         e.preventDefault(); 
         togglePause(); 
@@ -1051,33 +1137,90 @@ function handleKeyDown(e) {
 
     if (isAIControlled) return;
 
-    // Movement keys
     const dirs = { 
-        "i":"up","I":"up", 
-        "k":"down","K":"down", 
-        "j":"left","J":"left", 
-        "l":"right","L":"right" 
+        "w":"up","W":"up", "s":"down","S":"down", 
+        "a":"left","A":"left", "d":"right","D":"right" 
     };
 
-    if (dirs[key]) e.preventDefault();
-    if (isPaused) return;
-
     if (dirs[key]) {
+        e.preventDefault();
+        if (isPaused) isPaused = false; // Use new direction to resume the game
         nextDirection = dirs[key];
 
-        // This block handles the very first movement key press
+        // If no movement yet, start moving in this direction
         if (!gameLoopInterval) {
-            const { valid } = checkNextMove(nextDirection);
-            if (valid) {
-                currentDirection = nextDirection;
-                startGameLoop();
-      
-                // Immediate ghost activation for first movement-key to start
-                ghostsActivated = true; 
-            }
+            currentDirection = dirs[key]; 
+            tryPlayBGM();
+            startGameLoop();
+
+            delayGhostActivation();
         }
     }
 }
+
+// function handleKeyDown(e) {
+//     const key = e.key;
+//     if (key === " ") { 
+//         e.preventDefault(); 
+//         togglePause(); 
+//         return;
+//     } 
+
+//     if (isAIControlled) return;
+
+//     // Movement keys
+//     const dirs = { 
+//         "w":"up","W":"up", 
+//         "s":"down","S":"down", 
+//         "a":"left","A":"left", 
+//         "d":"right","D":"right" 
+//     };
+
+//     if (dirs[key]) {
+//         e.preventDefault();
+
+//         // Stop pausing on movement key press
+//         isPaused = false;
+//         nextDirection = dirs[key];
+//         // If no movement yet, start moving in this direction
+//         if (!currentDirection || !gameLoopInterval) {
+//             currentDirection = dirs[key];
+//             tryPlayBGM();
+//             startGameLoop();
+//         }
+
+//         // if (!gameLoopInterval) {
+//         //     const { valid } = checkNextMove(nextDirection);
+//         //     currentDirection = nextDirection;
+//         //     tryPlayBGM();
+//         //     startGameLoop();
+//         //     // Immediate ghost activation for first movement-key to start
+//         //     // ghostsActivated = true; 
+//         // }
+//     }
+//     // if (isPaused) return;
+
+//     if (dirs[key]) {
+//         if (isPaused) {
+//             isPaused = false;
+//         }
+
+//         nextDirection = dirs[key];
+
+//         // This block handles the very first movement key press
+//         if (!gameLoopInterval) {
+//             const { valid } = checkNextMove(nextDirection);
+//             if (valid) {
+//                 currentDirection = nextDirection;
+//                 tryPlayBGM();
+//                 startGameLoop();
+      
+//                 // Immediate ghost activation for first movement-key to start
+//                 // ghostsActivated = true; 
+//             }
+//         }
+//     }
+// }
 
 // ======================================================
 //                TOUCH INPUT
@@ -1154,6 +1297,14 @@ function resizeMaze() {
 // ======================================================
 //                INITIALIZATION
 // ======================================================
+function tryPlayBGM() {
+    if (audioBGM && audioBGM.paused) {
+        audioBGM.volume = 0.6;
+        audioBGM.play().catch(error => {
+            console.log("Waiting for user interaction to play BGM:", error);
+        });
+    }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     const grid = document.getElementById("maze-grid");
@@ -1162,6 +1313,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // BGM
     audioBGM = document.getElementById("bgm");
+
     // Create Pac-Man
     pacmanGraphicElement = document.createElement("div");
     pacmanGraphicElement.classList.add("pacman-graphic","pacman-right");
@@ -1180,10 +1332,24 @@ document.addEventListener("DOMContentLoaded", () => {
     aiControlBtns.forEach(button => {
         button.addEventListener("click", (event) => {
             const algorithm = event.target.getAttribute("data-algorithm");
+            
+            // Play BGM on AI start
+            tryPlayBGM();
 
             // Apply AI-Control
             toggleAIControl(true, algorithm);
+            gameStarted = true;
+            isPaused = false;
+            if (currentDirection === null) currentDirection = "left";
+
             startGameLoop();
+
+            // Set a initial direction to start movement
+            // if (!gameStarted) {
+            //     currentDirection = "left";
+            //     startGameLoop();
+            //     // gameStarted = true;
+            // }
 
             // Select specific algorithm to Python server
             if (aiWebSocket && aiWebSocket.readyState === WebSocket.OPEN){
