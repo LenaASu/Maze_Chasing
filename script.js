@@ -1278,6 +1278,31 @@ function handleTouchSwipe() {
 
 function resizeMaze() {
     const grid = document.getElementById("maze-grid");
+    const card = document.querySelector(".maze-card");
+    // const container = grid ? grid.parentElement: null;
+    // if (!grid || !container) return;
+    if (!grid || !card) return;
+
+    const style = window.getComputedStyle(card);
+    const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+    const availableWidth = card.clientWidth - paddingX - 8; // 8 是 grid 左右各 4px 的 border
+
+    // 2. 严谨计算 cellSize（向下取整避免像素溢出）
+    cellSize = Math.floor(availableWidth / 28);
+
+    // 3. 强制网格保持这个精确的像素大小
+    grid.style.gridTemplateColumns = `repeat(28, ${cellSize}px)`;
+    grid.style.gridAutoRows = `${cellSize}px`;
+    grid.style.width = `${cellSize * 28}px`; // 确保网格总宽度等于格子总和
+
+    // const availableWidth = container.clientWidth;
+    // // const containerWidth = grid.clientWidth;
+
+    // cellSize = availableWidth/28;
+
+    // grid.style.gridTemplateColumns = `repeat(28, ${cellSize}px)`;
+    // grid.style.gridAutoRows = `${cellSize}px`;
+
     if (grid.offsetWidth > 0) {
         cellSize = grid.offsetWidth / PACMAN_MAZE[0].length;
         pacmanGraphicElement.style.width = `${cellSize}px`;
