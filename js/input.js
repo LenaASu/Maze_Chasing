@@ -52,10 +52,9 @@ export function setupInputHandles() {
     // Pause/Start game on mobile
     if (mazeGrid) {
         mazeGrid.addEventListener("click", (e) => {
+            tryPlayBGM();
             if (window.innerWidth <= 768) {
-                
                 if (!window.gameState.gameLoopInterval) {
-                    tryPlayBGM();
                     startGameLoop();
                     delayEnemyActivation();
                     console.log("Game Started via Tap");
@@ -121,5 +120,6 @@ export function setupInputHandles() {
 export function updateGlobalRerirPos(r,c) {
     currR = r;
     currC = c;
+
 
 }
