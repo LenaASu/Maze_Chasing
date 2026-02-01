@@ -150,7 +150,7 @@
 }
 
 .enemy-start::after {
-    content: '__/';
+    content: '';
     font-size: 0.8rem;
     color: var(--color-cage);
     font-weight: bold;
@@ -179,6 +179,7 @@
 .albedo-graphic {
     background-image: url('../characters/Albedo.png'); 
 }
+
 
 
 
