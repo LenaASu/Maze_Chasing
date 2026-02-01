@@ -32,7 +32,7 @@ let isBgmPlaying = false;
 
 export function startGameLoop() {
     if (window.gameState.gameLoopInterval) return;
-    window.gameState.gameLoopInterval = setInterval(gameTick, 250); // Remain the same with game.css
+    window.gameState.gameLoopInterval = setInterval(gameTick, 150); // Remain the same with game.css
 }
 
 function moveEnemies() {
