@@ -47,6 +47,26 @@ export function setupInputHandles() {
     let touchStartX = 0;
     let touchStartY = 0;
 
+    const mazeGrid = document.getElementById("maze-grid");
+
+    // Pause/Start game on mobile
+    if (mazeGrid) {
+        mazeGrid.addEventListener("click", (e) => {
+            if (window.innerWidth <= 768) {
+                
+                if (!window.gameState.gameLoopInterval) {
+                    tryPlayBGM();
+                    startGameLoop();
+                    delayEnemyActivation();
+                    console.log("Game Started via Tap");
+                } else {
+                    togglePause();
+                    console.log("Pause Toggled via Tap. Status:", window.gameState.isPaused);
+                }
+            }
+        });
+    }
+    
     // Touch controls
     document.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
