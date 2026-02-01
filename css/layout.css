@@ -230,22 +230,19 @@
 }
 
 /* Footer */
-/* Footer */
 footer .author-link {
     color: var(--color-text-light, #d5caf1); 
     text-decoration: none;
     position: relative;
     font-weight: 600;
-    display: inline-block; /* 必须加这一行，transform 才能生效 */
-    /* 包含 transform、color 和 shadow 的丝滑过渡 */
+    display: inline-block; 
+
     transition: color 0.3s ease, text-shadow 0.3s ease, transform 0.3s ease;
 }
 
 footer .author-link:hover {
     color: #dfcbef; 
     text-shadow: 0 0 10px rgba(147, 112, 219, 0.8), 0 0 20px rgba(72, 64, 218, 0.4);
-    /* 悬停时字体放大 1.08 倍（稍微小一点点，避免显得突兀） */
-    /* transform: scale(1.08);  */
 }
 
 footer .author-link::after {
@@ -253,11 +250,11 @@ footer .author-link::after {
     position: absolute;
     width: 0;
     height: 1.5px;
-    /* 增加距离：从 -2px 改为 -6px 或 -8px */
+   
     bottom: -6px; 
     left: 0;
     background: linear-gradient(90deg, #4840da, #e293fd);
-    /* 让下划线的展开也变得丝滑 */
+
     transition: width 0.3s ease;
 }
 
