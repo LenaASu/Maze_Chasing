@@ -35,10 +35,10 @@
     }
 
     /* 3. Maze Grid Visual Adjustments */
-    #maze-grid {
+    /* #maze-grid {
         touch-action: none; 
         user-select: none;
-    }
+    } */
 
     /* 4. Scoreboard Scaling (Allow scoreboard to fill mobile width) */
     .scoreboard {
