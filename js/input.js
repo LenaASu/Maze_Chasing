@@ -43,7 +43,9 @@ export function setupInputHandles() {
             }
         }
     });
-
+    
+    let touchStartX = 0;
+    let touchStartY = 0;
 
     // Touch controls
     document.addEventListener('touchstart', (e) => {
@@ -55,6 +57,12 @@ export function setupInputHandles() {
         const touchEndX = e.changedTouches[0].screenX;
         const touchEndY = e.changedTouches[0].screenY;
         handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY);
+
+        if (!window.gameState.gameLoopInterval && !window.gameState.isPaused) {
+            tryPlayBGM();
+            startGameLoop();
+            delayEnemyActivation();
+        }
     }, { passive: true });
 
     function handleSwipe(startX, startY, endX, endY) {
@@ -75,7 +83,7 @@ export function setupInputHandles() {
             console.log("Swipe Direction:", window.gameState.nextDirection);
         }
     }
-    
+
     // AI Control Buttons
     const aiBtns = document.querySelectorAll(".ai-control-btn");
     aiBtns.forEach(btn => {
