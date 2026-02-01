@@ -1,0 +1,47 @@
+@keyframes pulse {
+    from { opacity: 1; }
+    to { opacity: 0.5; }
+}
+
+@keyframes moonlightFlow {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* 1. Game Area Layout Adjustments (Force vertical layout on mobile) */
+    .game-area-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 0 0.5rem;
+        max-width: 100%;
+    }
+
+    /* 2. Maze Card Scaling (Force scaling on mobile) */
+    .maze-card {
+        max-width: 98%;
+        width: fit-content; /* Allow JS to control final pixel size */
+        padding: 1rem;
+        order: -1;
+    }
+
+    /* 3. Maze Grid Visual Adjustments */
+    /* #maze-grid {
+        border: 4px solid #9196f7; 
+        box-shadow: 0 0 20px rgba(145, 150, 247, 0.4);
+    } */
+
+    /* 4. Scoreboard Scaling (Allow scoreboard to fill mobile width) */
+    .scoreboard {
+        max-width: 98vw;
+    }
+}
