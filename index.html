@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@800&family=Montserrat:wght@900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Germania+One&display=swap" rel="stylesheet">
@@ -126,3 +127,131 @@
 
 </html>
 
+=======
+<!DOCTYPE html>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@800&family=Montserrat:wght@900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Germania+One&display=swap" rel="stylesheet">
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="icon" type="image/png" href="characters/Rerir.png">
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/mobile.css">
+    
+    <title>Rerir: Werewolf</title>
+</head>
+<body>
+    <audio id="bgm" src="To Light the Aeon Dark.mp3" preload="auto" loop></audio>
+    <div class="header-container">
+        <h1 class="header-title">Rerir: Werewolf</h1>
+        <h3 >  Press the <span class="border">space</span> to stop/resume the game.</h3>
+       <p><strong>Up:</strong> W <space></space><strong>Down:</strong> S <strong>Left: </strong>A <strong>Right:</strong> D</p>
+       
+    </div>
+
+    <div class="game-area-container">
+
+        <div class="maze-card">
+            <div id="maze-grid">
+                </div>
+            <div id="rerir"></div>
+        </div>
+
+        <div class="scoreboard">
+            <h2 class="scoreboard-title">Scoreboard</h2>
+            <div class="score-item">
+                <span class="score-label">Score</span>
+                <span class="score-value" id="score-val">0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Best Score</span>
+                <span class="score-value" id="high-score">2540</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Lives</span>
+                <span class="score-value" id="lives-val">3</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Level</span>
+                <span class="score-value" id="level">1</span>
+            </div>
+
+            <h2 class="scoreboard-title">Enemies</h2>
+
+            <div class="enemy-row">
+                <div class="score-item enemy-item">
+                    <img src="characters/traveler.png"/>
+                    <span class="score-label">Traveler</span>
+                </div>
+                <div class="score-item enemy-item">
+                    <img src="characters/Aino.png"/>
+                    <span class="score-label">Aino</span>
+                </div>
+            </div>
+
+            <div class="enemy-row">
+                <div class="score-item enemy-item">
+                    <img src="characters/Albedo.png"/>
+                    <span class="score-label">Albedo</span>
+                </div>
+                <div class="score-item enemy-item">
+                    <img src="characters/Flins.png"/>
+                    <span class="score-label">Flins</span>
+                </div>
+            </div>
+
+
+            <h2 class="scoreboard-title">Skills</h2>
+            <div class="score-item">
+                <span class="score-label">Map Reshape (GA)</span>
+                <span class="score-value" id="current-score"></span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Map Reshape (SA)</span>
+                <span class="score-value" id="current-score"></span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Map Reshape (Hill)</span>
+                <span class="score-value" id="current-score"></span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Navigation (MCTS)</span>
+                <span class="score-value">
+                    <button class="ai-control-btn" data-algorithm="mcts">✔</button>
+                </span>
+       
+            </div>
+            <div class="score-item">
+                <span class="score-label">Navigation (A*)</span>
+                <span class="score-value">
+                    <button class="ai-control-btn" data-algorithm="a_star">✔</button>
+                </span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Navigation (DQN)</span>
+                <span class="score-value">
+                    <button class="ai-control-btn" data-algorithm="dqn">✔</button>
+                </span>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <div class="header-subtitle">
+        <p>Created & Developed by 
+            <a href="https://x.com/LenaAsu_" target="_blank" class="author-link">LenaA (@LenaAsu_)</a>
+        </p>
+        <p>Illustrations, Character Designs, and Assets by <strong>LenaA</strong>. Music by <strong>HOYO-MIX</strong>.</p>
+         <p>Inspired by <em>Genshin Impact: Song of the Welkin Moon</em> (&copy; HoYoverse) and classic arcade mechanics. This is a non-commercial fan project.</p>
+    </div>
+       
+    </footer>
+    
+    <script type = "module" src="./js/main.js"></script>
+
+    
+</body>
+</html>
+>>>>>>> 3eb84a6 (chore: sync local resource files and fix engine logic)

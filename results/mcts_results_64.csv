@@ -1,0 +1,2 @@
+game_id,algorithm,iteration,duration,score,avg_iterations,avg_time,total_steps
+56,mcts,0,0.0,740,0,0,0

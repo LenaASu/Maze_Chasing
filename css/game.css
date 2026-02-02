@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .legend-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -195,3 +196,203 @@
 
 
 
+=======
+
+
+
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    max-width: 300px;
+    margin: 0.75rem auto 0;
+    text-align: left;
+}
+
+/* Utility classes for legend items (DOTS, SYMBOLS, WALL) */
+.legend-symbol-wall {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    background-color: var(--color-moon-3);
+    margin-right: 0.5rem;
+    border-radius: 0.125rem;
+}
+.legend-symbol-wrapper {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+}
+
+
+
+/* --- Maze Grid Core CSS (Inside the Card) --- */
+#maze-grid {
+    display: grid;
+    /* grid-template-columns: repeat(26, 1fr); */
+    /* max-width: 100%; */
+    width: max-content;
+    height: auto;
+    justify-content: center;
+    position: relative;
+    overflow: visible;
+    box-sizing: content-box;
+    margin: 0 auto;
+    /* aspect-ratio: auto; */
+    user-select: none;
+}
+
+
+
+/* Maze Cell Styling */
+.cell {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.wall {
+    background-color: var(--color-wall);  
+    border: 2px solid rgba(160, 137, 229, 0.27); 
+    box-shadow: inset 0 0 8px rgba(99, 102, 241, 0.3); 
+    border-radius: 4px;
+}
+
+.tile {
+    z-index: 1;
+    aspect-ratio: 1/1;
+} 
+
+
+.tile.heart-fragment {
+    background-color: transparent; 
+    border-radius: 50%;
+    
+    background-image: url('../Elements/HeartFragment.png'); 
+    background-size: contain; /* Ensure the image fits within the cell */
+    background-repeat: no-repeat; /* Don't repeat the image */
+    background-position: center; /* Center the image in the cell */
+}
+
+
+.path, .fragment, .heart-fragment, .enemy-start, .rerir-start {
+    background-color: rgba(15, 23, 42, 0.6); 
+    backdrop-filter: blur(2px);
+}
+
+.fragment {
+    position: relative;
+    background-color: transparent !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.fragment::after{
+    content: "";
+    width: 3px;
+    height: 3px;
+    background-color: var(--color-fragment);
+    border-radius: 50%;
+
+}
+
+
+.heart-fragment::after {
+    content: '';
+    width: 30%;
+    height: 30%;
+    background-color: var(--color-yellow);
+    border-radius: 50%;
+    animation: pulse 1s infinite alternate;
+}
+
+
+.rerir-start::after {
+    content: '';
+}
+
+.rerir-graphic,.enemy-graphic {
+    top: 0;             
+    left: 0;            
+    margin: 0; 
+    position: absolute;
+    background-size: contain;
+    pointer-events: none;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: auto;
+    height: auto;
+    z-index: 100;
+}
+
+.rerir-graphic, 
+.enemy-graphic, 
+.tile.heart-fragment {
+    image-rendering: pixelated;       /* Chrome, Edge, Safari */
+    image-rendering: -moz-crisp-edges; /* Firefox */
+    
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+#rerir {
+    position: absolute;
+    z-index: 10;
+    top: 0;             
+    left: 0;            
+    margin: 0;
+    transition: transform 0.3s linear;
+}
+
+.rerir-graphic {
+    transition: transform var(--game-speed) linear;
+    filter: drop-shadow(0 0 3px var(--color-moon-5));
+
+    background-image: url('../characters/Rerir.png');
+}
+.enemy-graphic, #enemy1, #enemy2, #enemy3, #enemy4 {
+    transition: transform 0.3s linear; 
+    will-change: transform; 
+}
+
+.enemy-start::after {
+    content: '';
+    font-size: 0.8rem;
+    color: var(--color-cage);
+    font-weight: bold;
+}
+
+.enemy-gate {
+    background-color: transparent !important;
+    border-top: 2px solid var(--color-red);
+    height: 100%;
+    width: 100%;
+}
+
+
+.enemy2-graphic {
+    background-image: url('../characters/traveler.png'); 
+}
+
+.enemy1-graphic {
+    background-image: url('../characters/Aino.png'); 
+}
+
+.enemy4-graphic {
+    background-image: url('../characters/Flins.png'); 
+}
+
+.enemy3-graphic {
+    background-image: url('../characters/Albedo.png'); 
+}
+
+
+
+
+>>>>>>> 3eb84a6 (chore: sync local resource files and fix engine logic)

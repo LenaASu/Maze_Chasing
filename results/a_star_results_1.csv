@@ -1,0 +1,2 @@
+game_id,algorithm,iteration,duration,score,avg_iterations,avg_time,total_steps
+1,a_star,0,0.0,1020,0,0,0
