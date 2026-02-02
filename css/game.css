@@ -1,6 +1,3 @@
-
-
-
 .legend-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -148,7 +145,7 @@
     top: 0;             
     left: 0;            
     margin: 0;
-    transition: transform 0.2s linear;
+    transition: transform 0.3s linear;
 }
 
 .rerir-graphic {
@@ -158,7 +155,7 @@
     background-image: url('../characters/Rerir.png');
 }
 .enemy-graphic, #enemy1, #enemy2, #enemy3, #enemy4 {
-    transition: transform 0.2s linear; 
+    transition: transform 0.3s linear; 
     will-change: transform; 
 }
 
@@ -192,6 +189,7 @@
 .enemy3-graphic {
     background-image: url('../characters/Albedo.png'); 
 }
+
 
 
 
