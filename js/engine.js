@@ -27,8 +27,43 @@ import { cellSize, updateScoreboard, updateCharacterPosition } from "./render.js
 
 let isBgmPlaying = false;
 
+// engine.js
+
+export function syncInitialPositions() {
+    const grid = document.getElementById("maze-grid");
+    if (!grid || grid.offsetWidth === 0) {
+        // 如果网格还没加载好，0.1秒后再试，直到获取到有效宽度
+        setTimeout(syncInitialPositions, 100);
+        return;
+    }
+    // 重新获取当前最准确的格子大小
+    const currentSize = grid ? grid.offsetWidth / 26 : 26; 
+
+    const rerirEl = document.getElementById("rerir");
+    if (rerirEl) {
+        rerirEl.style.transition = 'none'; 
+        updateCharacterPosition(rerirEl, window.gameState.currR, window.gameState.currC, currentSize);
+        rerirEl.offsetHeight; // 触发重绘
+        rerirEl.style.transition = 'transform 0.2s linear';
+    }
+
+    // 同步敌人位置
+    Object.keys(window.gameState.enemies).forEach(id => {
+        const enemy = window.gameState.enemies[id];
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.transition = 'none';
+            updateCharacterPosition(el, enemy.r, enemy.c, currentSize);
+            el.offsetHeight;
+            el.style.transition = 'transform 0.2s linear';
+        }
+    });
+}
+
+
 export function startGameLoop() {
     if (window.gameState.gameLoopInterval) return;
+    syncInitialPositions();
 
     // Calculate fragments
     window.gameState.totalFragments = RERIR_MAZE.flat().filter(cell => 
@@ -36,7 +71,10 @@ export function startGameLoop() {
     ).length;
     // console.log("Original # of total fragments is: ", window.gameState.totalFragments);
 
-    window.gameState.gameLoopInterval = setInterval(gameTick, 200);
+    setTimeout(() => {
+        window.gameState.gameLoopInterval = setInterval(gameTick, 200);
+    }, 50);
+    // window.gameState.gameLoopInterval = setInterval(gameTick, 200);
 }
 
 export function countInitialItems() {
@@ -205,7 +243,7 @@ function gameTick() {
     const state = window.gameState;
 
     const grid = document.getElementById("maze-grid");
-    const currentSize = grid ? grid.offsetWidth / RERIR_MAZE[0].length : 26; 
+    const currentSize = grid ? grid.offsetWidth / 26 : 26;
     
     checkCollision();
 

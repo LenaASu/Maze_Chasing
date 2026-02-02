@@ -3,6 +3,7 @@
 // ======================================================
 
 import { RERIR_MAZE, WALL, PATH, FRAGMENT, HEART_FRAGMENT, ENEMY_START, RERIR_START } from './config.js';
+import { syncInitialPositions } from './engine.js';
 
 // DOM element references
 let rerirGraphicElement = null;
@@ -58,6 +59,9 @@ export function initializeMaze(character) {
     }
 
     rerirGraphicElement = rerir;
+    requestAnimationFrame(() => {
+        syncInitialPositions();
+    });
 }
 
 /**
@@ -115,7 +119,12 @@ export function resizeMaze(CHARACTERS) {
  */
 export function updateCharacterPosition(element, row, col, cellSize) {
     if (!element) return;
-    element.style.transform = `translate(${col * cellSize}px, ${row * cellSize}px)`;
+    const x = col * cellSize;
+    const y = row * cellSize;
+    
+    // 在手机端使用 translate3d 可以开启硬件加速，运行更流畅
+    element.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    // element.style.transform = `translate(${col * cellSize}px, ${row * cellSize}px)`;
 }
 
 /**
