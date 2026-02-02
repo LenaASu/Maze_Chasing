@@ -46,10 +46,16 @@ export const RERIR_MAZE = [
 
 // ----- Enemy -----
 export const INITIAL_CHARACTERS = {
-    traveler: { r: 14, c: 12, direction: 'up', state: "escape", speedMultiplier: 0.7, color: "#4785f4" },
-    albedo:   { r: 14, c: 13, direction: 'up', state: "escape", speedMultiplier: 0.7, color: "#ea4335" },
-    aino:     { r: 14, c: 11, direction: 'up', state: "escape", speedMultiplier: 0.7, color: "#fbbc05" },
-    flins:    { r: 14, c: 14, direction: 'up', state: "escape", speedMultiplier: 0.7, color: "#34a853" }
+    rerir: { 
+        type: "rerir", 
+        r: RERIR_START_R, 
+        c: RERIR_START_C 
+    },
+
+    enemy1: { r: 14, c: 11, direction: 'up', state: "escape", speedMultiplier: 0.6},
+    enemy2: { r: 14, c: 12, direction: 'up', state: "escape", speedMultiplier: 0.6},
+    enemy3: { r: 14, c: 13, direction: 'up', state: "escape", speedMultiplier: 0.6},
+    enemy4: { r: 14, c: 14, direction: 'up', state: "escape", speedMultiplier: 0.6}
 };
 
 // ----- Others -----

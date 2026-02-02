@@ -1,10 +1,3 @@
-// ======================================================
-//                    engine.js
-// ======================================================
-
-import { INITIAL_CHARACTERS, RERIR_START_R, RERIR_START_C, RERIR_MAZE, WALL, FRAGMENT, HEART_FRAGMENT } from "./config.js";
-import { cellSize, updateScoreboard, updateCharacterPosition } from "./render.js";
-
 if (!window.gameState) {
     window.gameState = {};
 }
@@ -12,6 +5,7 @@ if (!window.gameState) {
 Object.assign(window.gameState, {
     score: 0,
     lives: 3,
+    totalFragments: 0,
     isPaused: false,
     enemyActivated: false,
     currentDirection: null,
@@ -21,73 +15,200 @@ Object.assign(window.gameState, {
     currR: RERIR_START_R,
     currC: RERIR_START_C,
     enemies: {
-        enemy1: { r: 14, c: 12, dir: "up", type: "en1" },
-        enemy2: { r: 14, c: 13, dir: "up", type: "en2" },
-        enemy3: { r: 14, c: 14, dir: "up", type: "en3" },
-        enemy4: { r: 14, c: 15, dir: "up", type: "en4" },
+        enemy1: { r: 14, c: 11, dir: "up", type: "en1" },
+        enemy2: { r: 14, c: 12, dir: "up", type: "en2" },
+        enemy3: { r: 14, c: 13, dir: "up", type: "en3" },
+        enemy4: { r: 14, c: 14, dir: "up", type: "en4" },
     }
 });
+
+import { INITIAL_CHARACTERS, RERIR_START_R, RERIR_START_C, RERIR_MAZE, WALL, FRAGMENT, HEART_FRAGMENT } from "./config.js";
+import { cellSize, updateScoreboard, updateCharacterPosition } from "./render.js";
 
 let isBgmPlaying = false;
 
 export function startGameLoop() {
     if (window.gameState.gameLoopInterval) return;
-    window.gameState.gameLoopInterval = setInterval(gameTick, 150); // Remain the same with game.css
+
+    // Calculate fragments
+    window.gameState.totalFragments = RERIR_MAZE.flat().filter(cell => 
+        cell === FRAGMENT || cell === HEART_FRAGMENT
+    ).length;
+    // console.log("Original # of total fragments is: ", window.gameState.totalFragments);
+
+    window.gameState.gameLoopInterval = setInterval(gameTick, 200);
+}
+
+export function countInitialItems() {
+    // Use flat() to calculate # of elements
+    window.gameState.totalItems = RERIR_MAZE.flat().filter(cell => 
+        cell === FRAGMENT || cell === HEART_FRAGMENT
+    ).length;
+    
+    console.log("Total fragments to collect:", window.gameState.totalItems);
 }
 
 function moveEnemies() {
     if (!window.gameState.enemyActivated) return;
 
+    const grid = document.getElementById("maze-grid");
+    const cellSize = grid ? grid.offsetWidth / RERIR_MAZE[0].length : 26;
+
     for (const name in window.gameState.enemies) {
         const enemy = window.gameState.enemies[name];
-        
-        // Get all possible moves
-        const possibleDirs = ["up", "down", "left", "right"].filter(d => {
-            if (!canMove(enemy.r, enemy.c, d)) return false;
-            const opposites = { "up": "down", "down": "up", "left": "right", "right": "left" };
-            return d !== opposites[enemy.dir];
-        });
+        const element = document.getElementById(name);
 
-        // If not possible move, choose a random move
-        if (possibleDirs.length > 1 || !canMove(enemy.r, enemy.c, enemy.dir)) {
-            if (possibleDirs.length > 0) {
-                enemy.dir = possibleDirs[Math.floor(Math.random() * possibleDirs.length)];
+        // Check wall/boundary
+        let next = getNextPosition(enemy.r, enemy.c, enemy.dir);
+
+        if (RERIR_MAZE[next.r][next.c] === WALL || Math.random() < 0.1) {
+            const dirs = ["up", "down", "left", "right"];
+            const validDirs = dirs.filter(d => {
+                const p = getNextPosition(enemy.r, enemy.c, d);
+                return RERIR_MAZE[p.r] && RERIR_MAZE[p.r][p.c] !== WALL;
+            });
+            
+            if (validDirs.length > 0) {
+                enemy.dir = validDirs[Math.floor(Math.random() * validDirs.length)];
+                next = getNextPosition(enemy.r, enemy.c, enemy.dir); 
             }
         }
 
-        // Execuate move
-        const next = getNextPosition(enemy.r, enemy.c, enemy.dir);
+        // Move
+        const isWarping = Math.abs(next.c - enemy.c) > 1;
         enemy.r = next.r;
         enemy.c = next.c;
 
-        // Update DOM
-        const element = document.getElementById(name);
-        const cellSize = parseInt(document.getElementById("maze-grid").style.gridAutoRows);
-        updateCharacterPosition(element, enemy.r, enemy.c, cellSize);
-    }
-}
-
-function checkGhostCollision() {
-    const state = window.gameState;
-    for (const name in state.enemies) {
-        const enemy = state.enemies[name];
-        if (enemy.r === state.currR && enemy.c === state.currC) {
-            if (state.isWerewolfMode) {
-                // 
-                console.log("Enemy eaten!");
-                respawnEnemy(name);
-            } else {
-                //
-                handleRerirDeath();
+        if (element) {
+            if (isWarping) element.style.transition = 'none';
+            updateCharacterPosition(element, enemy.r, enemy.c, cellSize);
+            if (isWarping) {
+                setTimeout(() => {
+                    element.style.transition = 'transform 0.2s linear';
+                }, 50);
             }
         }
     }
+}
+
+function respawnEnemy(id){
+    const initialPos = {
+        enemy1: {r: 14, c: 11},
+        enemy2: {r: 14, c: 12},
+        enemy3: {r: 14, c: 13},
+        enemy4: {r: 14, c: 14},
+    };
+
+    const pos = initialPos[id];
+    if (pos) {
+        window.gameState.enemies[id].r = pos.r;
+        window.gameState.enemies[id].c = pos.c;
+        window.gameState.enemies[id].dir = "up"; // Reset the respawned initial move
+
+        const element = document.getElementById(id);
+        const grid = document.getElementById("maze-grid");
+        const cellSize = grid ? parseInt(grid.style.gridAutoRows) : 26;
+
+        updateCharacterPosition(element, pos.r, pos.c, cellSize);
+    }
+}
+
+function respawnRerir() {
+    // Reset position
+    window.gameState.currR = RERIR_START_R;
+    window.gameState.currC = RERIR_START_C;
+    
+    // Clear moving status
+    window.gameState.currentDirection = null;
+    window.gameState.nextDirection = null;
+
+    // Update visual position
+    const rerirEl = document.getElementById("rerir");
+    if (rerirEl) {
+        // Calculate current grid size for resizing maze
+        const grid = document.getElementById("maze-grid");
+        const currentSize = grid ? grid.offsetWidth / RERIR_MAZE[0].length : 26;
+        
+        // Render
+        updateCharacterPosition(rerirEl, RERIR_START_R, RERIR_START_C, currentSize);
+    }
+    
+    // console.log("Rerir has respawned.");
+}
+
+function checkCollision() {
+    const state = window.gameState;
+    
+    for (const name in state.enemies) {
+        const enemy = state.enemies[name];
+        
+        const distR = Math.abs(enemy.r - state.currR);
+        const distC = Math.abs(enemy.c - state.currC);
+
+        if (distR < 0.8 && distC < 0.8) {
+            if (state.isWerewolfMode) {
+                console.log("Rerir ate enemy:", name);
+                state.score += 200;
+                respawnEnemy(name);
+                updateScoreboard(state.score, state.lives);
+            } else {
+                console.log("Caught by:", name);
+                handleRerirDeath();
+                return; 
+            }
+        }
+    }
+}
+
+function handleRerirDeath() {
+    window.gameState.lives--;
+    updateScoreboard(window.gameState.score, window.gameState.lives);
+
+    if (window.gameState.lives <= 0) {
+        stopGameLoop();
+        setTimeout(() => {
+            alert("⛓️‍💥 YOU ARE ARRESTED! Final score: " + window.gameState.score);
+            location.reload();
+        }, 100);
+        return;
+    } else {
+        window.gameState.currR = RERIR_START_R;
+        window.gameState.currC = RERIR_START_C;
+        window.gameState.currentDirection = null;
+        window.gameState.nextDirection = null;
+
+        Object.keys(window.gameState.enemies).forEach(id => {
+            respawnEnemy(id);
+        });
+
+        window.gameState.enemyActivated = false;
+        delayEnemyActivation();
+        // console.log("Rerir respawned. Lives left:" + window.gameState.lives);
+    }
+    const grid = document.getElementById("maze-grid");
+    const cellSize = grid ? grid.offsetWidth / RERIR_MAZE[0].length : 26;
+    
+    updateCharacterPosition(document.getElementById("rerir"), window.gameState.currR, window.gameState.currC, cellSize);
+}
+
+function handleRerirVictory() {
+    stopGameLoop(); 
+
+    setTimeout(() => {
+        alert("🎉🐺 Rerir Werewolf! You collected all fragments! \nFinal Score: " + window.gameState.score);
+        location.reload(); 
+    }, 300);
 }
 
 function gameTick() {
     if (window.gameState.isPaused) return;
     const state = window.gameState;
+
+    const grid = document.getElementById("maze-grid");
+    const currentSize = grid ? grid.offsetWidth / RERIR_MAZE[0].length : 26; 
     
+    checkCollision();
+
     // Move Rerir
     if (state.nextDirection && canMove(state.currR, state.currC, state.nextDirection)) {
         state.currentDirection = state.nextDirection;
@@ -96,24 +217,38 @@ function gameTick() {
 
     if (state.currentDirection && canMove(state.currR, state.currC, state.currentDirection)) {
         const next = getNextPosition(state.currR, state.currC, state.currentDirection);
-        state.currR = next.r;
-        state.currC = next.c;
         
-        // Check eaten 
-        checkEat(state.currR, state.currC);
+        // Check if using tunnel
+        const isWarping = Math.abs(next.c - state.currC) > 1;
 
-        // Update Rerir
-        const rerirElement = document.getElementById("rerir");
-        const currentSize = cellSize || 26; 
+        if (RERIR_MAZE[next.r][next.c] !== WALL) {
+            const rerirEl = document.getElementById("rerir");
+            
+            if (isWarping && rerirEl) {
+                rerirEl.style.transition = 'none'; 
+                rerirEl.offsetHeight; 
+            }
 
-        if (rerirElement) {
-            updateCharacterPosition(rerirElement, state.currR, state.currC, currentSize);
+            state.currR = next.r;
+            state.currC = next.c;
+
+            updateCharacterPosition(rerirEl, state.currR, state.currC, currentSize);
+
+            if (isWarping && rerirEl) {
+                // 
+                requestAnimationFrame(() => {
+                    rerirEl.style.transition = 'transform 0.2s linear';
+                });
+            }
         }
+        checkEat(state.currR, state.currC);
     }
 
-    if (typeof updateScoreboard === 'function') {
-        updateScoreboard(window.gameState.score, window.gameState.lives);
-    }
+    checkCollision();
+
+    // Move enemies
+    moveEnemies();
+    checkCollision();
 }
 
 function canMove(r, c, dir) {
@@ -127,10 +262,30 @@ function getNextPosition(r, c, dir) {
     let nextR = r;
     let nextC = c;
     if (dir === "up") nextR--;
-    else if (dir === "down") nextR++;
-    else if (dir === "left") nextC--;
-    else if (dir === "right") nextC++;
-    return { r: nextR, c: nextC };
+    if (dir === "down") nextR++;
+    if (dir === "left") nextC--;
+    if (dir === "right") nextC++;
+
+    // Tunnel
+    const mazeWidth = RERIR_MAZE[0].length;
+    if (nextC < 0) {
+        nextC = mazeWidth - 1;
+    }
+    else if (nextC >= mazeWidth) {
+        nextC = 0;
+    }
+
+   return { r: nextR, c: nextC };
+}
+
+function getOppositeDir(dir) {
+    const opposites = {
+        "up": "down",
+        "down": "up",
+        "left": "right",
+        "right": "left"
+    };
+    return opposites[dir] || null;
 }
 
 function checkEat(r, c) {
@@ -163,6 +318,13 @@ function checkEat(r, c) {
         if (cellValue === HEART_FRAGMENT) {
             activateWerewolfMode();
         }
+
+        // Win the game
+        window.gameState.totalFragments--;
+        if (window.gameState.totalFragments === 0) {
+            handleRerirVictory();
+        }
+
     }
 }
 
@@ -195,7 +357,7 @@ export function delayEnemyActivation() {
     setTimeout(() => {
         window.gameState.enemyActivated = true;
         console.log("Enemies Activated");
-    }, 3000); // Activate enemies after 3 seconds
+    }, 500); // Activate enemies after 0.5 seconds
 }
 
 export function tryPlayBGM() {
