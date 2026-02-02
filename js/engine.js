@@ -26,8 +26,15 @@ import { INITIAL_CHARACTERS, RERIR_START_R, RERIR_START_C, RERIR_MAZE, WALL, FRA
 import { cellSize, updateScoreboard, updateCharacterPosition } from "./render.js";
 
 let isBgmPlaying = false;
+let cachedCellSize = 0;
 
-// engine.js
+export function updateCachedCellSize() {
+    const grid = document.getElementById("maze-grid");
+    if (grid) {
+        cachedCellSize = grid.offsetWidth / 26;
+    }
+}
+window.addEventListener('resize', updateCachedCellSize);
 
 export function syncInitialPositions() {
     const grid = document.getElementById("maze-grid");
@@ -89,8 +96,8 @@ export function countInitialItems() {
 function moveEnemies() {
     if (!window.gameState.enemyActivated) return;
 
-    const grid = document.getElementById("maze-grid");
-    const cellSize = grid ? grid.offsetWidth / RERIR_MAZE[0].length : 26;
+    // const grid = document.getElementById("maze-grid");
+    const cellSize = cachedCellSize || 26;
 
     for (const name in window.gameState.enemies) {
         const enemy = window.gameState.enemies[name];
@@ -142,12 +149,6 @@ function respawnEnemy(id){
         window.gameState.enemies[id].r = pos.r;
         window.gameState.enemies[id].c = pos.c;
         window.gameState.enemies[id].dir = "up"; // Reset the respawned initial move
-
-        const element = document.getElementById(id);
-        const grid = document.getElementById("maze-grid");
-        const cellSize = grid ? parseInt(grid.style.gridAutoRows) : 26;
-
-        updateCharacterPosition(element, pos.r, pos.c, cellSize);
     }
 }
 
@@ -172,6 +173,50 @@ function respawnRerir() {
     }
     
     // console.log("Rerir has respawned.");
+}
+
+function moveRerir(currentSize) {
+    const state = window.gameState;
+    const rerirEl = document.getElementById("rerir");
+    if (!rerirEl) return;
+
+    // 1. 转向逻辑：如果预设了下一个方向且可行，则切换
+    if (state.nextDirection && canMove(state.currR, state.currC, state.nextDirection)) {
+        state.currentDirection = state.nextDirection;
+        state.nextDirection = null;
+    }
+
+    // 2. 移动逻辑
+    if (state.currentDirection && canMove(state.currR, state.currC, state.currentDirection)) {
+        const next = getNextPosition(state.currR, state.currC, state.currentDirection);
+        
+        // 判断是否触发了左右穿梭洞（列差距大于1）
+        const isWarping = Math.abs(next.c - state.currC) > 1;
+
+        if (RERIR_MAZE[next.r][next.c] !== WALL) {
+            if (isWarping) {
+                // 穿梭时瞬间移动，取消平滑过渡
+                rerirEl.style.transition = 'none'; 
+                rerirEl.offsetHeight; // 强制重绘
+            }
+
+            state.currR = next.r;
+            state.currC = next.c;
+
+            // 更新物理位置
+            updateCharacterPosition(rerirEl, state.currR, state.currC, currentSize);
+
+            if (isWarping) {
+                // 穿梭完成后恢复过渡动画
+                requestAnimationFrame(() => {
+                    rerirEl.style.transition = 'transform 0.2s linear';
+                });
+            }
+            
+            // 检查是否吃到东西
+            checkEat(state.currR, state.currC);
+        }
+    }
 }
 
 function checkCollision() {
@@ -205,7 +250,7 @@ function handleRerirDeath() {
     if (window.gameState.lives <= 0) {
         stopGameLoop();
         setTimeout(() => {
-            alert("⛓️‍💥 YOU ARE ARRESTED! Final score: " + window.gameState.score);
+            alert("⛓️‍💥 YOU ARE ARRESTED! Final score: " + window.gameState.score + ".");
             location.reload();
         }, 100);
         return;
@@ -216,75 +261,38 @@ function handleRerirDeath() {
         window.gameState.nextDirection = null;
 
         Object.keys(window.gameState.enemies).forEach(id => {
+            const enemy = window.gameState.enemies[id];
             respawnEnemy(id);
         });
+
+                syncInitialPositions();
 
         window.gameState.enemyActivated = false;
         delayEnemyActivation();
         // console.log("Rerir respawned. Lives left:" + window.gameState.lives);
     }
-    const grid = document.getElementById("maze-grid");
-    const cellSize = grid ? grid.offsetWidth / RERIR_MAZE[0].length : 26;
+    // const grid = document.getElementById("maze-grid");
+    // const cellSize = grid ? grid.offsetWidth / RERIR_MAZE[0].length : 26;
     
-    updateCharacterPosition(document.getElementById("rerir"), window.gameState.currR, window.gameState.currC, cellSize);
+    // updateCharacterPosition(document.getElementById("rerir"), window.gameState.currR, window.gameState.currC, cellSize);
 }
 
 function handleRerirVictory() {
     stopGameLoop(); 
 
     setTimeout(() => {
-        alert("🎉🐺 Rerir Werewolf! You collected all fragments! \nFinal Score: " + window.gameState.score);
+        alert("🎉🐺 Rerir Werewolf! You collected all fragments! \nFinal Score: " + window.gameState.score + ".");
         location.reload(); 
     }, 300);
 }
 
 function gameTick() {
     if (window.gameState.isPaused) return;
-    const state = window.gameState;
-
-    const grid = document.getElementById("maze-grid");
-    const currentSize = grid ? grid.offsetWidth / 26 : 26;
     
-    checkCollision();
-
-    // Move Rerir
-    if (state.nextDirection && canMove(state.currR, state.currC, state.nextDirection)) {
-        state.currentDirection = state.nextDirection;
-        state.nextDirection = null;
-    }
-
-    if (state.currentDirection && canMove(state.currR, state.currC, state.currentDirection)) {
-        const next = getNextPosition(state.currR, state.currC, state.currentDirection);
-        
-        // Check if using tunnel
-        const isWarping = Math.abs(next.c - state.currC) > 1;
-
-        if (RERIR_MAZE[next.r][next.c] !== WALL) {
-            const rerirEl = document.getElementById("rerir");
-            
-            if (isWarping && rerirEl) {
-                rerirEl.style.transition = 'none'; 
-                rerirEl.offsetHeight; 
-            }
-
-            state.currR = next.r;
-            state.currC = next.c;
-
-            updateCharacterPosition(rerirEl, state.currR, state.currC, currentSize);
-
-            if (isWarping && rerirEl) {
-                // 
-                requestAnimationFrame(() => {
-                    rerirEl.style.transition = 'transform 0.2s linear';
-                });
-            }
-        }
-        checkEat(state.currR, state.currC);
-    }
+    if (cachedCellSize === 0) updateCachedCellSize(); 
 
     checkCollision();
-
-    // Move enemies
+    moveRerir(cachedCellSize);
     moveEnemies();
     checkCollision();
 }
