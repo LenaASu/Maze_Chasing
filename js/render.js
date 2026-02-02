@@ -119,10 +119,8 @@ export function resizeMaze(CHARACTERS) {
  */
 export function updateCharacterPosition(element, row, col, cellSize) {
     if (!element) return;
-    const x = col * cellSize;
-    const y = row * cellSize;
-    
-    // 在手机端使用 translate3d 可以开启硬件加速，运行更流畅
+    const x = Math.round(col * cellSize);
+    const y = Math.round(row * cellSize);
     element.style.transform = `translate3d(${x}px, ${y}px, 0)`;
     // element.style.transform = `translate(${col * cellSize}px, ${row * cellSize}px)`;
 }
@@ -140,4 +138,5 @@ export function updateScoreboard(score, lives) {
     
 }
 window.updateScoreboard = updateScoreboard;
+
 export { cellSize, rerirGraphicElement };
