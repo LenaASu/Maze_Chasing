@@ -49,7 +49,6 @@
 
 
 
-
 /* Maze Cell Styling */
 .cell {
     aspect-ratio: 1 / 1;
@@ -148,6 +147,10 @@
 
     background-image: url('../characters/Rerir.png');
 }
+.enemy-graphic, #enemy1, #enemy2, #enemy3, #enemy4 {
+    transition: transform 0.2s linear; 
+    will-change: transform; 
+}
 
 .enemy-start::after {
     content: '';
@@ -164,22 +167,21 @@
 }
 
 
-.traveler-graphic {
+.enemy2-graphic {
     background-image: url('../characters/traveler.png'); 
 }
 
-.aino-graphic {
+.enemy1-graphic {
     background-image: url('../characters/Aino.png'); 
 }
 
-.flins-graphic {
+.enemy4-graphic {
     background-image: url('../characters/Flins.png'); 
 }
 
-.albedo-graphic {
+.enemy3-graphic {
     background-image: url('../characters/Albedo.png'); 
 }
-
 
 
 
