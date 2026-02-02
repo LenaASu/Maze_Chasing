@@ -132,6 +132,16 @@
     z-index: 100;
 }
 
+.rerir-graphic, 
+.enemy-graphic, 
+.tile.heart-fragment {
+    image-rendering: pixelated;       /* Chrome, Edge, Safari */
+    image-rendering: -moz-crisp-edges; /* Firefox */
+    
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
 #rerir {
     position: absolute;
     z-index: 10;
@@ -182,6 +192,7 @@
 .enemy3-graphic {
     background-image: url('../characters/Albedo.png'); 
 }
+
 
 
 
