@@ -79,7 +79,7 @@ export function startGameLoop() {
     // console.log("Original # of total fragments is: ", window.gameState.totalFragments);
 
     setTimeout(() => {
-        window.gameState.gameLoopInterval = setInterval(gameTick, 200);
+        window.gameState.gameLoopInterval = setInterval(gameTick, 300);
     }, 50);
     // window.gameState.gameLoopInterval = setInterval(gameTick, 200);
 }
@@ -419,5 +419,6 @@ export function tryPlayBGM() {
         });
     }
 }
+
 
 
