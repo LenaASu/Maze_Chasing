@@ -1,3 +1,5 @@
+import { moveEnemies, getNextEnemyStep } from './moveEnemy.js';
+
 if (!window.gameState) {
     window.gameState = {};
 }
@@ -39,22 +41,22 @@ window.addEventListener('resize', updateCachedCellSize);
 export function syncInitialPositions() {
     const grid = document.getElementById("maze-grid");
     if (!grid || grid.offsetWidth === 0) {
-        // 如果网格还没加载好，0.1秒后再试，直到获取到有效宽度
+        // If grid is not ready, try again after a short delay
         setTimeout(syncInitialPositions, 100);
         return;
     }
-    // 重新获取当前最准确的格子大小
+    // Recalculate current grid size for resizing maze
     const currentSize = grid ? grid.offsetWidth / 26 : 26; 
 
     const rerirEl = document.getElementById("rerir");
     if (rerirEl) {
         rerirEl.style.transition = 'none'; 
         updateCharacterPosition(rerirEl, window.gameState.currR, window.gameState.currC, currentSize);
-        rerirEl.offsetHeight; // 触发重绘
+        rerirEl.offsetHeight; // Request reflow to apply the position immediately
         rerirEl.style.transition = 'transform 0.2s linear';
     }
 
-    // 同步敌人位置
+    // Update enemy positions based on gameState
     Object.keys(window.gameState.enemies).forEach(id => {
         const enemy = window.gameState.enemies[id];
         const el = document.getElementById(id);
@@ -90,7 +92,7 @@ export function countInitialItems() {
         cell === FRAGMENT || cell === HEART_FRAGMENT
     ).length;
     
-    console.log("Total fragments to collect:", window.gameState.totalItems);
+    // console.log("Total fragments to collect:", window.gameState.totalItems);
 }
 
 function moveEnemies() {
@@ -171,8 +173,6 @@ function respawnRerir() {
         // Render
         updateCharacterPosition(rerirEl, RERIR_START_R, RERIR_START_C, currentSize);
     }
-    
-    // console.log("Rerir has respawned.");
 }
 
 function moveRerir(currentSize) {
@@ -180,40 +180,34 @@ function moveRerir(currentSize) {
     const rerirEl = document.getElementById("rerir");
     if (!rerirEl) return;
 
-    // 1. 转向逻辑：如果预设了下一个方向且可行，则切换
+    // If there's a next direction and it's valid, switch to it
     if (state.nextDirection && canMove(state.currR, state.currC, state.nextDirection)) {
         state.currentDirection = state.nextDirection;
         state.nextDirection = null;
     }
 
-    // 2. 移动逻辑
     if (state.currentDirection && canMove(state.currR, state.currC, state.currentDirection)) {
         const next = getNextPosition(state.currR, state.currC, state.currentDirection);
         
-        // 判断是否触发了左右穿梭洞（列差距大于1）
         const isWarping = Math.abs(next.c - state.currC) > 1;
 
         if (RERIR_MAZE[next.r][next.c] !== WALL) {
             if (isWarping) {
-                // 穿梭时瞬间移动，取消平滑过渡
                 rerirEl.style.transition = 'none'; 
-                rerirEl.offsetHeight; // 强制重绘
+                rerirEl.offsetHeight;
             }
 
             state.currR = next.r;
             state.currC = next.c;
 
-            // 更新物理位置
             updateCharacterPosition(rerirEl, state.currR, state.currC, currentSize);
 
             if (isWarping) {
-                // 穿梭完成后恢复过渡动画
                 requestAnimationFrame(() => {
                     rerirEl.style.transition = 'transform 0.2s linear';
                 });
             }
             
-            // 检查是否吃到东西
             checkEat(state.currR, state.currC);
         }
     }
@@ -230,12 +224,12 @@ function checkCollision() {
 
         if (distR < 0.8 && distC < 0.8) {
             if (state.isWerewolfMode) {
-                console.log("Rerir ate enemy:", name);
+                // console.log("Rerir ate enemy:", name);
                 state.score += 200;
                 respawnEnemy(name);
                 updateScoreboard(state.score, state.lives);
             } else {
-                console.log("Caught by:", name);
+                // console.log("Caught by:", name);
                 handleRerirDeath();
                 return; 
             }

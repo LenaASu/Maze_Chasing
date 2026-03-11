@@ -28,7 +28,7 @@
     --color-path: #070617;           
     --color-wall: #303969b8; 
 
-    --color-fragment: #941e8e;  
+    --color-fragment: #c32fbb;  
     --color-accent: #e5b3f9;     
 
     --color-footerlink: #bae6fd;
@@ -37,18 +37,17 @@
     --moon-glow: #bbe9f4; 
     --moon-mist: #60A69F; 
     --moon-shadow: #1C4E59; 
-    
-    /* --color-moon-1: #05162f;
-    --color-moon-2: #1C4E59;
-    --color-moon-3: #45858C;
-    --color-moon-4: #60A69F;
-    --color-moon-5: #bbe9f4; */
 
     --color-moon-1: #336e96;
     --color-moon-2: #284e79;         
     --color-moon-3: #312e81;        
     --color-moon-4: #6366f1;        
     --color-moon-5: #bae6fd;
+    --color-moon-6: #05162f;
+    --color-moon-7: #1C4E59;
+    --color-moon-8: #45858C;
+    --color-moon-9: #60A69F;
+    --color-moon-10: #bbe9f4;
 
     --color-1: #0F172A;
     --color-2: #4840da;
