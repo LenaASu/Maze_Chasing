@@ -1,4 +1,5 @@
-import { moveEnemies, getNextEnemyStep } from './moveEnemy.js';
+import { INITIAL_CHARACTERS, RERIR_START_R, RERIR_START_C, RERIR_MAZE, WALL, FRAGMENT, HEART_FRAGMENT } from "./config.js";
+import { cellSize, updateScoreboard, updateCharacterPosition } from "./render.js";
 
 if (!window.gameState) {
     window.gameState = {};
@@ -23,9 +24,6 @@ Object.assign(window.gameState, {
         enemy4: { r: 14, c: 14, dir: "up", type: "en4" },
     }
 });
-
-import { INITIAL_CHARACTERS, RERIR_START_R, RERIR_START_C, RERIR_MAZE, WALL, FRAGMENT, HEART_FRAGMENT } from "./config.js";
-import { cellSize, updateScoreboard, updateCharacterPosition } from "./render.js";
 
 let isBgmPlaying = false;
 let cachedCellSize = 0;

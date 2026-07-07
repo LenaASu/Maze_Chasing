@@ -1,6 +1,6 @@
-import { INITIAL_CHARACTERS } from "./config";
-import { rerirGraphicElement } from "./render";
-import { RERIR_MAZE } from "./config";
+import { INITIAL_CHARACTERS } from "./config.js";
+import { rerirGraphicElement } from "./render.js";
+import { RERIR_MAZE } from "./config.js";
 // import { INITIAL_CHARACTERS, RERIR_START_R, RERIR_START_C, RERIR_MAZE, WALL, FRAGMENT, HEART_FRAGMENT } from "./config.js";
 // import { cellSize, updateScoreboard, updateCharacterPosition } from "./render.js";
 
